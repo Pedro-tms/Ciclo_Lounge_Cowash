@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0 maximum-scale=1.0, user-scalable=no">
+
+    <title>Painel Barbearia Piriquito</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet"> 
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="{% if selecionado %}mobile-chat-open{% endif %}">
+
+    <div class="sidebar">
+        <div class="header">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="font-size: 22px;">💈</div>
+                <h3 style="font-size: 16px; font-weight: 600; letter-spacing: 0.5px;">PIRIQUITO</h3>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <div id="status-conn" style="font-size: 10px; color: var(--status-conn); font-weight: 700; text-transform: uppercase;">● ON</div>
+                <button class="theme-toggle" onclick="toggleTheme()" title="Mudar Tema">
+                    <span id="theme-icon" style="font-size: 18px;">🌗</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="contact-list">
+            {% for cli in clientes %}
+            <a href="/painel?cliente={{ cli['cliente_numero'] }}" 
+               class="contact-link {% if cli['cliente_numero'] == selecionado %}active{% endif %}">
+                <div class="avatar">👤</div>
+                <div style="overflow: hidden;">
+                    <div style="font-weight: 500; font-size: 15px;">{{ cli['cliente_numero'] }}</div>
+                    <div style="font-size: 12px; color: var(--text-sec); margin-top: 2px;">Toque para atender</div>
+                </div>
+            </a>
+            {% else %}
+            <div style="padding: 40px 20px; text-align: center; color: var(--text-sec); font-size: 13px;">
+                Nenhum cliente recente.
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="chat-area">
+        <div class="chat-content-wrapper">
+            {% if selecionado %}
+            <div class="chat-header">
+                <a href="/painel" class="btn-back">⬅️</a>
+
+                <div class="avatar" style="width: 38px; height: 38px; margin-right: 12px; font-size: 16px; border:none; background: rgba(255,255,255,0.2); color: #fff;">👤</div>
+                <div>
+                    <div style="font-weight: 600; font-size: 15px;">{{ selecionado }}</div>
+                    <div style="font-size: 12px; color: var(--status-conn); opacity: 0.9;">Atendimento</div>
+                </div>
+            </div>
+            
+            <div class="messages" id="msg-box">
+                {% for msg in mensagens %}
+                {% set origem_limpa = msg['origem'].split()[0] %}
+                
+                <div class="msg msg-{{ origem_limpa }}">
+                    <div>{{ msg['mensagem'] }}</div>
+                    <div class="msg-meta">
+                        {% if origem_limpa != "Cliente" %}
+                            <span class="role-badge badge-{{ origem_limpa }}">{{ origem_limpa }}</span>
+                        {% endif %}
+                        <span class="time">{{ msg['horario'] }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <form action="/enviar_manual" method="POST" class="input-area">
+                <input type="hidden" name="numero" value="{{ selecionado }}">
+                <input type="text" name="mensagem" class="input-box" placeholder="Digite sua resposta..." autocomplete="off" autofocus>
+                <button type="submit" class="btn-send">➤</button>
+            </form>
+
+            {% else %}
+            <div class="empty-state">
+                <div style="font-size: 50px; margin-bottom: 15px; opacity: 0.5; color: var(--primary);">✂️</div>
+                <h2 style="font-weight: 300; color: var(--text-sec);">Painel de Controle</h2>
+                <p style="font-size: 14px;">Selecione um cliente para ver o histórico.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const icon = document.getElementById('theme-icon');
+            
+            if (currentTheme === 'dark') {
+                body.removeAttribute('data-theme');
+                icon.innerText = '☀️';
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                icon.innerText = '🌙';
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            document.body.setAttribute('data-theme', 'dark');
+            document.getElementById('theme-icon').innerText = '🌙';
+        } else {
+            document.getElementById('theme-icon').innerText = '☀️';
+        }
+
+        var msgBox = document.getElementById("msg-box");
+        if(msgBox) { msgBox.scrollTop = msgBox.scrollHeight; }
+
+        setInterval(function() {
+            var input = document.querySelector(".input-box");
+            var estaDigitando = (document.activeElement === input);
+            var statusLabel = document.getElementById("status-conn");
+            
+            if (estaDigitando) {
+                statusLabel.innerText = "✋ Digitando...";
+                statusLabel.style.color = "yellow";
+            } else {
+                statusLabel.innerText = "● ON";
+                statusLabel.style.color = "var(--status-conn)"; 
+
+                fetch(window.location.href)
+                    .then(response => response.text())
+                    .then(htmlText => {
+                        var parser = new DOMParser();
+                        var doc = parser.parseFromString(htmlText, 'text/html');
+                        
+                        var novasMensagens = doc.getElementById('msg-box').innerHTML;
+                        var caixaAtual = document.getElementById('msg-box');
+
+                        if (novasMensagens && caixaAtual && caixaAtual.innerHTML !== novasMensagens) {
+                            caixaAtual.innerHTML = novasMensagens;
+                            if (caixaAtual.scrollHeight - caixaAtual.scrollTop < 600) {
+                                caixaAtual.scrollTop = caixaAtual.scrollHeight;
+                            }
+                        }
+                    })
+                    .catch(err => console.log('Erro ao atualizar chat:', err));
+            }
+        }, 3000); 
+    </script>
+</body>
+</html>
