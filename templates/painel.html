@@ -1,44 +1,213 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-pt">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0 maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Painel | Ciclo Lounge</title>
+    
+    <style>
+        :root {
+            --header-bg: #f0f2f5; 
+            --bg-app: #d1d7db;       
+            --bg-sidebar: #ffffff;  
+            --status-conn: #00a884; 
+            --footer: #f0f2f5;       
+            --bg-chat: #efe7dd;      
+            --border-color: #e9edef;
+            --text-main: #111b21;
+            --text-sec: #54656f;
+            --msg-cliente: #ffffff;
+            --msg-bot: #f0f2f5;     
+            --msg-atendente: #d9fdd3; 
+            --input-bg: #ffffff;
+            --primary: #00a884;      
+            --shadow: 0 1px 0.5px rgba(11,20,26,.13);
+            --active-contact: #f0f2f5;
+            --scroll-thumb: #ced0d1;
+            --doodle-opacity: 0.35;
+        }
 
-    <title>Painel Barbearia Pirikito</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet"> 
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+        [data-theme="dark"] {
+            --header-bg: #202c33;    
+            --bg-app: #0b141a;       
+            --bg-sidebar: #111b21;   
+            --status-conn: #00a884;
+            --footer: #202c33;       
+            --bg-chat: #0b141a;      
+            --border-color: #222e35; 
+            --text-main: #e9edef;    
+            --text-sec: #8696a0;     
+            --msg-cliente: #202c33;   
+            --msg-bot: #26353d;       
+            --msg-atendente: #005c4b; 
+            --input-bg: #2a3942;     
+            --primary: #00a884;      
+            --shadow: 0 1px 0.5px rgba(0,0,0,.3);
+            --active-contact: #222e35;
+            --scroll-thumb: #374045;
+            --doodle-opacity: 0.06;  
+        }
+
+        * { box-sizing: border-box; transition: background-color 0.2s, border-color 0.2s; }
+
+        body { 
+            font-family: 'Roboto', -apple-system, Helvetica, Arial, sans-serif; 
+            margin: 0; 
+            background-color: var(--bg-app); 
+            height: 100vh; 
+            display: flex; 
+            overflow: hidden; 
+            color: var(--text-main);
+            font-size: 14.5px;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 3px; }
+
+        .sidebar { 
+            width: 30%; max-width: 320px; min-width: 260px;
+            background-color: var(--bg-sidebar); 
+            border-right: 1px solid var(--border-color); 
+            display: flex; flex-direction: column; 
+        }
+
+        .header { 
+            background-color: var(--header-bg); 
+            padding: 10px 16px; height: 60px; 
+            display: flex; align-items: center; justify-content: space-between;
+            border-bottom: 1px solid var(--border-color);
+            z-index: 2;
+        }
+
+        .theme-toggle {
+            background: none; border: none; cursor: pointer; font-size: 18px;
+            padding: 6px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: var(--text-sec);
+        }
+        .theme-toggle:hover { background-color: rgba(0,0,0,0.05); }
+
+        .contact-list { flex: 1; overflow-y: auto; }
+
+        .contact-link {
+            text-decoration: none; color: var(--text-main); display: flex; align-items: center;
+            padding: 12px 15px; border-bottom: 1px solid var(--border-color); cursor: pointer;
+        }
+        .contact-link:hover { background-color: var(--active-contact); }
+        .contact-link.active { background-color: var(--active-contact); border-left: 4px solid var(--primary); }
+
+        .avatar { 
+            width: 42px; height: 42px; background-color: #dfe5e7; color: #54656f;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+            margin-right: 12px; font-size: 20px; flex-shrink: 0;
+        }
+        [data-theme="dark"] .avatar { background-color: #2a3942; color: #d1d7db; }
+
+        .chat-area { 
+            flex: 1; min-width: 0; display: flex; flex-direction: column; 
+            background-color: var(--bg-chat); position: relative;
+        }
+        
+        .chat-area::before {
+            content: ""; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); 
+            background-repeat: repeat; opacity: var(--doodle-opacity); 
+            pointer-events: none; z-index: 0;
+        }
+
+        .chat-content-wrapper { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; height: 100%; width: 100%; }
+
+        .chat-header { 
+            background-color: var(--header-bg); height: 60px; padding: 0 20px; 
+            display: flex; align-items: center; border-bottom: 1px solid var(--border-color);
+        }
+
+        .btn-delete {
+            margin-left: auto; background: none; border: none; cursor: pointer;
+            font-size: 20px; color: var(--text-sec); padding: 8px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .messages { flex: 1; padding: 20px 5%; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+
+        .msg { 
+            padding: 6px 9px 8px 9px; border-radius: 7.5px; max-width: 65%; width: fit-content; 
+            font-size: 14.2px; line-height: 19px; position: relative; box-shadow: var(--shadow); 
+            color: var(--text-main); margin-bottom: 8px; white-space: pre-wrap; word-wrap: break-word; z-index: 1;
+        }
+
+        .msg-Cliente { align-self: flex-start; background-color: var(--msg-cliente); border-top-left-radius: 0; margin-left: 8px; }
+        .msg-Bot { align-self: flex-end; background-color: var(--msg-bot); border-top-right-radius: 0; margin-right: 8px; }
+        .msg-Atendente { align-self: flex-end; background-color: var(--msg-atendente); border-top-right-radius: 0; margin-right: 8px; }
+
+        .msg-meta { display: flex; justify-content: flex-end; align-items: center; margin-top: 2px; gap: 4px; float: right; margin-left: 10px; }
+        .time { font-size: 11px; color: var(--text-sec); opacity: 0.8; margin-top: 3px;}
+        .role-badge { font-size: 9px; padding: 1px 4px; border-radius: 3px; font-weight: bold; text-transform: uppercase; }
+        .badge-Bot { background: rgba(0,0,0,0.06); color: var(--text-sec); }
+        .badge-Atendente { background: rgba(0, 168, 132, 0.15); color: var(--primary); }
+
+        /* Correção Definitiva da Barra e do Botão */
+        .input-area { 
+            background-color: var(--footer); padding: 10px 20px; 
+            display: flex; align-items: center; gap: 12px; 
+            width: 100%; box-sizing: border-box; flex-wrap: nowrap;
+        }
+
+        .input-box { 
+            flex: 1; padding: 12px 20px; border-radius: 24px; border: none; 
+            background-color: var(--input-bg); color: var(--text-main); 
+            outline: none; font-size: 15px; min-width: 0;
+        }
+
+        .btn-send { 
+            background-color: var(--primary); color: #fff; border: none; 
+            width: 44px; height: 44px; min-width: 44px; border-radius: 50%; 
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; padding: 0; margin: 0; outline: none;
+        }
+
+        .empty-state { 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            height: 100%; color: var(--text-sec); text-align: center;
+        }
+        .btn-back { display: none; font-size: 22px; margin-right: 15px; cursor: pointer; color: var(--text-main); text-decoration: none; }
+
+        @media (max-width: 768px) {
+            .sidebar { width: 100%; max-width: none; border: none; }
+            .chat-area { width: 100%; }
+            body.mobile-chat-open .sidebar { display: none; }
+            body.mobile-chat-open .chat-area { display: flex; }
+            body:not(.mobile-chat-open) .sidebar { display: flex; }
+            body:not(.mobile-chat-open) .chat-area { display: none; }
+            .btn-back { display: block; }
+        }
+    </style>
 </head>
 <body class="{% if selecionado %}mobile-chat-open{% endif %}">
 
     <div class="sidebar">
         <div class="header">
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="font-size: 22px;">💈</div>
-                <h3 style="font-size: 16px; font-weight: 600; letter-spacing: 0.5px;">Pirikito</h3>
+            <div style="display: flex; align-items: center; gap: 8px; color: var(--text-main);">
+                <div class="avatar" style="width: 32px; height: 32px; font-size: 16px; background: var(--primary); color: white;">🫧</div>
+                <strong style="font-size: 15px;">Ciclo Lounge</strong>
             </div>
-            
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <div id="status-conn" style="font-size: 10px; color: var(--status-conn); font-weight: 700; text-transform: uppercase;">● ON</div>
-                <button class="theme-toggle" onclick="toggleTheme()" title="Mudar Tema">
-                    <span id="theme-icon" style="font-size: 18px;">🌗</span>
-                </button>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <span id="status-conn" style="color: var(--status-conn); font-size: 11px; font-weight: bold;">● ON</span>
+                <button class="theme-toggle" onclick="toggleTheme()" id="theme-icon">☀️</button>
             </div>
         </div>
         
         <div class="contact-list">
             {% for cli in clientes %}
-            <a href="/painel?cliente={{ cli['cliente_numero'] }}" 
-               class="contact-link {% if cli['cliente_numero'] == selecionado %}active{% endif %}">
+            <a href="/painel?cliente={{ cli['cliente_numero'] }}" class="contact-link {% if cli['cliente_numero'] == selecionado %}active{% endif %}">
                 <div class="avatar">👤</div>
-                <div style="overflow: hidden;">
-                    <div style="font-weight: 500; font-size: 15px;">{{ cli['cliente_numero'] }}</div>
-                    <div style="font-size: 12px; color: var(--text-sec); margin-top: 2px;">Toque para atender</div>
+                <div style="flex: 1; overflow: hidden;">
+                    <div style="font-weight: 500; margin-bottom: 3px; color: var(--text-main);">{{ cli['cliente_numero'] }}</div>
+                    <div style="font-size: 13px; color: var(--text-sec);">Clique para visualizar</div>
                 </div>
             </a>
             {% else %}
-            <div style="padding: 40px 20px; text-align: center; color: var(--text-sec); font-size: 13px;">
-                Nenhum cliente recente.
-            </div>
+            <div style="padding: 20px; text-align: center; color: var(--text-sec); font-size: 14px;">Nenhum cliente ativo.</div>
             {% endfor %}
         </div>
     </div>
@@ -48,20 +217,30 @@
             {% if selecionado %}
             <div class="chat-header">
                 <a href="/painel" class="btn-back">⬅️</a>
+                <div class="avatar" style="width: 36px; height: 36px;">👤</div>
+                <div style="font-weight: 500; font-size: 15px; color: var(--text-main);">{{ selecionado }}</div>
+                
+                <div style="margin-left: auto; display: flex; gap: 12px; align-items: center;">
+                    
+                    <form action="/encerrar_atendimento" method="POST" style="margin: 0;" onsubmit="return confirm('Encerrar o atendimento manual e reativar o robô para este cliente?');">
+                        <input type="hidden" name="numero" value="{{ selecionado }}">
+                        <button type="submit" style="background-color: var(--primary); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                            🤖 Reativar Bot
+                        </button>
+                    </form>
 
-                <div class="avatar" style="width: 38px; height: 38px; margin-right: 12px; font-size: 16px; border:none; background: rgba(255,255,255,0.2); color: #fff;">👤</div>
-                <div>
-                    <div style="font-weight: 600; font-size: 15px;">{{ selecionado }}</div>
-                    <div style="font-size: 12px; color: var(--status-conn); opacity: 0.9;">Atendimento</div>
+                    <form action="/deletar_conversa" method="POST" class="btn-delete" style="margin: 0;" onsubmit="return confirm('Apagar todo o histórico com este cliente?');">
+                        <input type="hidden" name="numero" value="{{ selecionado }}">
+                        <button type="submit" style="background: none; border: none; padding: 0; margin: 0; cursor: pointer; color: inherit; font-size: 20px;">🗑️</button>
+                    </form>
                 </div>
             </div>
-            
+
             <div class="messages" id="msg-box">
                 {% for msg in mensagens %}
                 {% set origem_limpa = msg['origem'].split()[0] %}
-                
                 <div class="msg msg-{{ origem_limpa }}">
-                    <div>{{ msg['mensagem'] }}</div>
+                    {{ msg['mensagem'] }}
                     <div class="msg-meta">
                         {% if origem_limpa != "Cliente" %}
                             <span class="role-badge badge-{{ origem_limpa }}">{{ origem_limpa }}</span>
@@ -71,18 +250,20 @@
                 </div>
                 {% endfor %}
             </div>
-            
+
             <form action="/enviar_manual" method="POST" class="input-area">
                 <input type="hidden" name="numero" value="{{ selecionado }}">
-                <input type="text" name="mensagem" class="input-box" placeholder="Digite sua resposta..." autocomplete="off" autofocus>
-                <button type="submit" class="btn-send">➤</button>
+                <input type="text" name="mensagem" class="input-box" id="msg-input" placeholder="Digite uma mensagem..." autocomplete="off" autofocus required>
+                <button type="submit" class="btn-send">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" style="margin-left: 3px;"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                </button>
             </form>
 
             {% else %}
             <div class="empty-state">
-                <div style="font-size: 50px; margin-bottom: 15px; opacity: 0.5; color: var(--primary);">✂️</div>
-                <h2 style="font-weight: 300; color: var(--text-sec);">Painel de Controle</h2>
-                <p style="font-size: 14px;">Selecione um cliente para ver o histórico.</p>
+                <div style="font-size: 70px; margin-bottom: 20px;">🧺</div>
+                <h2 style="margin: 0 0 10px 0; font-weight: 300; color: var(--text-main);">Ciclo Lounge Cowash</h2>
+                <p style="margin: 0; font-size: 14px;">Selecione um cliente na barra lateral.</p>
             </div>
             {% endif %}
         </div>
@@ -90,61 +271,61 @@
 
     <script>
         function toggleTheme() {
-            const body = document.body;
-            const currentTheme = body.getAttribute('data-theme');
-            const icon = document.getElementById('theme-icon');
-            
-            if (currentTheme === 'dark') {
-                body.removeAttribute('data-theme');
-                icon.innerText = '☀️';
-                localStorage.setItem('theme', 'light');
+            const doc = document.documentElement;
+            const icon = document.getElementById("theme-icon");
+            if (doc.getAttribute("data-theme") === "dark") {
+                doc.removeAttribute("data-theme");
+                localStorage.setItem("theme", "light");
+                icon.innerText = "☀️";
             } else {
-                body.setAttribute('data-theme', 'dark');
-                icon.innerText = '🌙';
-                localStorage.setItem('theme', 'dark');
+                doc.setAttribute("data-theme", "dark");
+                localStorage.setItem("theme", "dark");
+                icon.innerText = "🌙";
             }
         }
-
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            document.body.setAttribute('data-theme', 'dark');
-            document.getElementById('theme-icon').innerText = '🌙';
-        } else {
-            document.getElementById('theme-icon').innerText = '☀️';
+        if (localStorage.getItem("theme") === "dark") {
+            document.documentElement.setAttribute("data-theme", "dark");
+            document.getElementById("theme-icon").innerText = "🌙";
         }
 
         var msgBox = document.getElementById("msg-box");
-        if(msgBox) { msgBox.scrollTop = msgBox.scrollHeight; }
+        if(msgBox) msgBox.scrollTop = msgBox.scrollHeight;
 
         setInterval(function() {
-            var input = document.querySelector(".input-box");
-            var estaDigitando = (document.activeElement === input);
+            var input = document.getElementById("msg-input");
+            var estaDigitando = document.activeElement === input;
             var statusLabel = document.getElementById("status-conn");
             
             if (estaDigitando) {
-                statusLabel.innerText = "✋ Digitando...";
-                statusLabel.style.color = "yellow";
+                statusLabel.innerText = "DIGITANDO...";
+                statusLabel.style.color = "#ffb300"; 
             } else {
                 statusLabel.innerText = "● ON";
                 statusLabel.style.color = "var(--status-conn)"; 
 
-                fetch(window.location.href)
-                    .then(response => response.text())
-                    .then(htmlText => {
-                        var parser = new DOMParser();
-                        var doc = parser.parseFromString(htmlText, 'text/html');
+                fetch(window.location.href, { cache: "no-store" })
+                    .then(r => r.text())
+                    .then(html => {
+                        var doc = new DOMParser().parseFromString(html, 'text/html');
                         
-                        var novasMensagens = doc.getElementById('msg-box').innerHTML;
+                        var novasMensagens = doc.getElementById('msg-box')?.innerHTML;
                         var caixaAtual = document.getElementById('msg-box');
 
                         if (novasMensagens && caixaAtual && caixaAtual.innerHTML !== novasMensagens) {
                             caixaAtual.innerHTML = novasMensagens;
-                            if (caixaAtual.scrollHeight - caixaAtual.scrollTop < 600) {
+                            if (caixaAtual.scrollHeight - caixaAtual.scrollTop < 800) {
                                 caixaAtual.scrollTop = caixaAtual.scrollHeight;
                             }
                         }
+
+                        var novaLista = doc.querySelector('.contact-list')?.innerHTML;
+                        var listaAtual = document.querySelector('.contact-list');
+
+                        if (novaLista && listaAtual && listaAtual.innerHTML !== novaLista) {
+                            listaAtual.innerHTML = novaLista;
+                        }
                     })
-                    .catch(err => console.log('Erro ao atualizar chat:', err));
+                    .catch(err => console.log('Erro na busca de novas mensagens:', err));
             }
         }, 3000); 
     </script>
