@@ -35,4 +35,4 @@ enviar_teste("555182873027", "SEM O NOVE")
 
 # TESTE 2: Número COM o 9 (Padrão Brasil atual)
 # Formato: 55 + 51 + 9 + 82873027
-enviar_teste("5551982873027", "COM O NOVE")
+enviar_teste("5551982873027", "COM O NOVE") 
